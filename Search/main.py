@@ -1,8 +1,8 @@
-from tree_search import Node, Tree
+from tree_search import Tree
 import time
-start_node = Node(1, 0)
-tree = Tree(start_node)
+
+tree = Tree()
 curr = time.time()
-print(tree.launch_search())
+print(tree.search(1, 0))
 print(time.time() - curr)
 print(len(tree.visited))

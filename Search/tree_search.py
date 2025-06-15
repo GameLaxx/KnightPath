@@ -13,52 +13,41 @@ def represent_board(board, position):
     return ret
 
 precomputed_coords = [(i // 8, i % 8) for i in range(64)]
-
-class Node():
-    def __init__(self, board, position, parent = None):
-        self.board = board
-        self.position = position
-        self.childs = []
-        self.parent = parent
-
-    def generate_childs(self):
-        current_square = precomputed_coords[self.position]
+                               
+class Tree():
+    def __init__(self):
+        self.visited = set()        
+        self.total_searchs = 0
+        
+    def generate_new_positions(self, board, position):
+        ret = []
+        current_square = precomputed_coords[position]
         for delta in [6, 15, 10, 17, -6, -15, -10, -17]:
-            new_position = self.position + delta
+            new_position = position + delta
             if not (0 <= new_position < 64): # not on the board
                 continue
             wanted_square = precomputed_coords[new_position]
             if not (abs(wanted_square[0] - current_square[0]) <= 2 and abs(wanted_square[1] - current_square[1]) <= 2): # not around the knight
                 continue
-            if self.board & 1 << new_position != 0: # already been there
+            if board & 1 << new_position != 0: # already been there
                 continue
-            self.childs.append(Node(self.board | 1 << new_position, new_position, self))
+            ret.append((board | 1 << new_position, new_position, self))
+        return ret
 
-    def __repr__(self):
-        return represent_board(self.board, self.position)
-                               
-class Tree():
-    def __init__(self, start_node):
-        self.start_node = start_node
-        self.visited = set()        
-        self.total_searchs = 0
-
-    def __search(self, current_node : Node):
+    def search(self, current_board, current_position):
         self.total_searchs += 1
-        if self.total_searchs > 1_000_000:
+        if self.total_searchs > 100_000:
             return None
-        if current_node.board == 0xFFFFFFFFFFFFFFFF: #complete
-            return current_node
-        if (current_node.board, current_node.position) in self.visited:
+        if current_board == 0xFFFFFFFFFFFFFFFF: #complete
+            return [current_board]
+        if (current_board, current_position) in self.visited:
             return None # already seen and failed
-        current_node.generate_childs()
-        for child in current_node.childs:
-            ret_search = self.__search(child)
+        next_positions = self.generate_new_positions(current_board, current_position)
+        next_positions.sort(key = lambda pos : sum(1 for _ in self.generate_new_positions(pos[0] | (1 << pos[1]), pos[1])))
+        for next in next_positions:
+            ret_search = self.search(next[0], next[1])
             if ret_search: # found complete
-                return ret_search
+                return [current_board] + ret_search
         # no child is worth
-        self.visited.add((current_node.board, current_node.position))
+        self.visited.add((current_board, current_position))
         return None
-        
-    def launch_search(self):
-        return self.__search(self.start_node)
