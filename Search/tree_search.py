@@ -1,19 +1,4 @@
-def represent_board(board, position):
-    ret = "."
-    for i in range(64):
-        if i % 8 == 0 and i != 0:
-            ret += "\n."
-        if i == position :
-            ret += "2"
-        elif board & 1 << i:
-            ret += "1"
-        else:
-            ret += "0"
-        ret += "."
-    return ret
-
-precomputed_coords = [(i // 8, i % 8) for i in range(64)]
-                               
+precomputed_coords = [(i // 8, i % 8) for i in range(64)]                               
 class Tree():
     def __init__(self):
         self.visited = set()        
@@ -39,7 +24,7 @@ class Tree():
         if self.total_searchs > 100_000:
             return None
         if current_board == 0xFFFFFFFFFFFFFFFF: #complete
-            return [current_board]
+            return [(current_board, current_position)]
         if (current_board, current_position) in self.visited:
             return None # already seen and failed
         next_positions = self.generate_new_positions(current_board, current_position)
@@ -47,7 +32,7 @@ class Tree():
         for next in next_positions:
             ret_search = self.search(next[0], next[1])
             if ret_search: # found complete
-                return [current_board] + ret_search
+                return [(current_board, current_position)] + ret_search
         # no child is worth
         self.visited.add((current_board, current_position))
         return None
